@@ -33,9 +33,10 @@ Route::get('polling',[PollController::class, 'get'])->middleware('token');
 
 Route::get('polling/result',[VoteController::class, 'index'])->middleware('token');
 
-Route::get('polling/{id}',[PollController::class, 'getById'])->middleware(['token','only-user']);
+Route::get('polling/{id}',[PollController::class, 'getById'])->middleware(['token']);
 Route::delete('polling/{id}',[PollController::class, 'delete'])->middleware(['token','must-admin']);
 
+Route::post('polling/{id}/voting',[VoteController::class, 'sudahVote'])->middleware(['token','only-user']);
 Route::post('polling/{id}/vote',[VoteController::class, 'voting'])->middleware(['token','only-user','vote']);
 
 Route::get('polling/{id}/result',[VoteController::class, 'getVote'])->middleware('token');

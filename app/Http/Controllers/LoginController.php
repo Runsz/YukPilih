@@ -26,24 +26,31 @@ class LoginController extends Controller
         $user = User::with('token')->where('username', $request->username)->first();
 
         if (!$user || ! Hash::check($request->password, $user->password)) {
-            return response()->json('Email atau password yang anda masukkan salah',401);
+            return response()->json([
+                'message'=>'username atau password yang anda masukkan salah'
+            ],401);
         }
 
-        if ($user->token != null) {
-            return response()->json("anda sudah login",400);
+        if ($user->token != null && $user->updated_at != null) {
+            return response()->json([
+                "change" => false,
+                "message" => 'login sukses',
+                "token" => $user->token->token
+            ]);
         }
 
         $token = LoginToken::createToken($user->id);
 
-        if ($user->update_at == null) {
+        if ($user->updated_at === null) {
             return response()->json([
-                "status" => 'Change Your Password',
+                "change" => true,
                 "token" => $token
             ]);
         }
 
         return response()->json([
-            "status" => 'login sukses',
+            "change" => false,
+            "message" => 'login sukses',
             "token" => $token
         ]);
     }
@@ -58,7 +65,7 @@ class LoginController extends Controller
         ],[
             'old_password.required' => 'password harus diisi',
             'new_password.required' => 'password baru harus diisi',
-            'new_password.min' => 'password minimal 8 digit',
+            'new_password.min' => 'new password minimal 8 digit',
             'new_password.confirmed' => 'confirm password harus sama'
         ]);
 
@@ -66,7 +73,9 @@ class LoginController extends Controller
         $oldPassword = $request->old_password;
         
         if (! Hash::check($oldPassword, $password)) {
-            return "old password salah";
+            return response()->json([
+                "message" => "old password salah"
+            ],422);
         }
         
         $user->update([
@@ -76,7 +85,7 @@ class LoginController extends Controller
         $token->delete();
         
         return response()->json([
-            "status" => 'Password berhasil diganti',
+            "message" => 'Password berhasil diganti',
             "data" => $user
         ],200);
     }

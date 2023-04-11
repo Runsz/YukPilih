@@ -40,7 +40,7 @@ class vote
             }
         }
         if ($status == true) {
-            return response()->json("anda sudah memilih");
+            return response()->json("anda sudah memilih",400);
         }
 
 
@@ -48,7 +48,7 @@ class vote
         $now = Carbon::now();
         $selisih = $deadline->diff($now);
         if ($selisih->invert <= 0) {
-            return response()->json("Waktu polling sudah habis");
+            return response()->json("Waktu polling sudah habis",400);
         }
 
         $pilihan = false;
@@ -58,7 +58,7 @@ class vote
             }
         }
         if ($pilihan == false) {
-            return response()->json("choice tidak ada");
+            return response()->json("choice tidak ada",404);
         }
 
         return $next($request);

@@ -9,6 +9,7 @@ use App\Models\Polling;
 use App\Models\User;
 use App\Models\vote;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class VoteController extends Controller
 {
@@ -41,7 +42,7 @@ class VoteController extends Controller
             return response()->json('polling id tidak ada',404);
         }
 
-        $Polling = Polling::find($id);
+        $Polling = Polling::with('choices')->find($id);
         $choices = choices::where("poll_id",$id)->with('votes')->get();
         $divisions = Division::all();
         
@@ -82,9 +83,10 @@ class VoteController extends Controller
 
         foreach ($PointChoice as $key => $v) {
             $persen[$key] = round($v / $jml * 100, 2);
+            // array_push($persen, [ $key => round($v / $jml * 100, 2)]); 
         }
 
-        return response()->json([$Polling->title => $persen]);
+        return response()->json($persen);
 
         // return response()->json([
         //     "Vote Per divisi" => $votes,
@@ -131,5 +133,38 @@ class VoteController extends Controller
         }
 
         return response()->json([$result]);
+    }
+
+    public function sudahVote(Request $request){
+        // dd($request);
+        $token = $request->token;
+        $user = LoginToken::where('token', $token)->first();
+        $polling = Polling::find($request->id);
+        $votes = vote::where('poll_id', $request->id)->get();
+
+        $status = false;
+        foreach ($votes as $vote) {
+            if ($user->user_id == $vote->user_id) {
+                if ($polling->id == $vote->poll_id) {
+                    $status = true;
+                }
+            }
+        }
+
+        $deadline = new Carbon($polling->deadline);
+        $now = Carbon::now();
+        $selisih = $deadline->diff($now);
+        if ($selisih->invert <= 0) {
+            return response()->json([
+                "voting" => $status,
+                "waktu" => true
+            ]);
+        }
+        else{
+            return response()->json([
+                "voting" => $status,
+                "waktu" => false
+            ]);
+        }
     }
 }
